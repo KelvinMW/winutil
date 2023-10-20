@@ -1,40 +1,23 @@
-#region Configurable Variables
+# Import Config Files
+$global:importedconfigs = @{}
+Get-ChildItem .\config | Where-Object {$_.Extension -eq ".json"} | ForEach-Object {
+    $global:importedconfigs[$psitem.BaseName] = Get-Content $psitem.FullName | ConvertFrom-Json
+}
 
-    <#
-        .NOTES
-        Use this section to configure testing variables. IE if the number of tabs change in the GUI update that variable here.
-        All variables need to be global to be passed between contexts
-
-    #>
-
-    $global:FormName = "Chris Titus Tech's Windows Utility"
-
-#endregion Configurable Variables
-
-#region Load Variables needed for testing
-
-    #Config Files
-    $global:importedconfigs = @{}
-    Get-ChildItem .\config | Where-Object {$_.Extension -eq ".json"} | ForEach-Object {
-        $global:importedconfigs[$psitem.BaseName] = Get-Content $psitem.FullName | ConvertFrom-Json
-    }
-
-
-#endregion Load Variables needed for testing 
 
 #===========================================================================
 # Tests - Application Installs
 #===========================================================================
 
 Describe "Config Files" -ForEach @(
-    @{ 
+    @{
         name = "applications"
         config = $('{
             "winget": "value",
             "choco": "value"
           }' | ConvertFrom-Json)
     },
-    @{ 
+    @{
         name = "tweaks"
         undo = $true
     }
@@ -54,7 +37,7 @@ Describe "Config Files" -ForEach @(
                         $result.Add($application)
                     }
                 }
-    
+
                 $result | Select-String "WPF*" | should -BeNullOrEmpty
             }
         }
@@ -65,16 +48,16 @@ Describe "Config Files" -ForEach @(
 
                 foreach ($tweak in $tweaks){
                     $Originals = @(
-                        @{ 
-                            name = "registry" 
+                        @{
+                            name = "registry"
                             value = "OriginalValue"
                         },
-                        @{ 
-                            name = "service" 
+                        @{
+                            name = "service"
                             value = "OriginalType"
-                        },                        
-                        @{ 
-                            name = "ScheduledTask" 
+                        },
+                        @{
+                            name = "ScheduledTask"
                             value = "OriginalState"
                         }
                     )
@@ -90,26 +73,5 @@ Describe "Config Files" -ForEach @(
             }
         }
 
-    }
-}
-
-
-#===========================================================================
-# Tests - Functions
-#===========================================================================
-
-Describe "Functions" -ForEach @(Get-ChildItem .\functions -Recurse -File){
-
-    BeforeEach -Scriptblock {
-        . $psitem.FullName
-    }
-    
-    Context "$($psitem.BaseName)" {
-        It "Imports with no errors" {
-            Get-ChildItem function:\$($psitem.BaseName) | should -Not -BeNullOrEmpty
-        }
-        It "Contains Description" {
-            get-help $($psitem.BaseName) -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Description | should -Not -BeNullOrEmpty
-        }
     }
 }

@@ -1,9 +1,9 @@
 function Invoke-WPFundoall {
     <#
-    
-        .DESCRIPTION
-        PlaceHolder
-    
+
+    .SYNOPSIS
+        Undoes every selected tweak
+
     #>
 
     if($sync.ProcessRunning){
@@ -11,30 +11,36 @@ function Invoke-WPFundoall {
         [System.Windows.MessageBox]::Show($msg, "Winutil", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning)
         return
     }
-    
-      $Tweaks = Get-WinUtilCheckBoxes -Group "WPFTweaks"
-        
-      Invoke-WPFRunspace -ArgumentList $Tweaks -ScriptBlock {
+
+    $Tweaks = Get-WinUtilCheckBoxes -Group "WPFTweaks"
+
+    if ($tweaks.count -eq 0){
+        $msg = "Please check the tweaks you wish to undo."
+        [System.Windows.MessageBox]::Show($msg, "Winutil", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning)
+        return
+    }
+
+    Invoke-WPFRunspace -ArgumentList $Tweaks -ScriptBlock {
         param($Tweaks)
-    
+
         $sync.ProcessRunning = $true
-    
+
         Foreach ($tweak in $tweaks){
             Invoke-WinUtilTweaks $tweak -undo $true
         }
-    
+
         $sync.ProcessRunning = $false
         Write-Host "=================================="
         Write-Host "---  Undo Tweaks are Finished  ---"
         Write-Host "=================================="
-    
+
         $ButtonType = [System.Windows.MessageBoxButton]::OK
         $MessageboxTitle = "Tweaks are Finished "
         $Messageboxbody = ("Done")
         $MessageIcon = [System.Windows.MessageBoxImage]::Information
-    
+
         [System.Windows.MessageBox]::Show($Messageboxbody, $MessageboxTitle, $ButtonType, $MessageIcon)
-      }
+    }
 
 <#
 

@@ -1,43 +1,38 @@
 Function Set-WinUtilService {
     <#
-    
-        .DESCRIPTION
-        This function will change the startup type of services and start/stop them as needed
 
-        .EXAMPLE
+    .SYNOPSIS
+        Changes the startup type of the given service
 
+    .PARAMETER Name
+        The name of the service to modify
+
+    .PARAMETER StartupType
+        The startup type to set the service to
+
+    .EXAMPLE
         Set-WinUtilService -Name "HomeGroupListener" -StartupType "Manual"
-    
-    #>   
+
+    #>
     param (
         $Name,
         $StartupType
     )
-    Try{
-        Write-Host "Setting Services $Name to $StartupType"
-        Set-Service -Name $Name -StartupType $StartupType -ErrorAction Stop
+    try {
+        Write-Host "Setting Service $Name to $StartupType"
 
-        if($StartupType -eq "Disabled"){
-            Write-Host "Stopping $Name"
-            Stop-Service -Name $Name -Force -ErrorAction Stop
-        }
-        if($StartupType -eq "Enabled"){
-            Write-Host "Starting $Name"
-            Start-Service -Name $Name -Force -ErrorAction Stop
-        }
+        # Check if the service exists
+        $service = Get-Service -Name $Name -ErrorAction Stop
+
+        # Service exists, proceed with changing properties
+        $service | Set-Service -StartupType $StartupType -ErrorAction Stop
     }
-    Catch [System.Exception]{
-        if($psitem.Exception.Message -like "*Cannot find any service with service name*" -or 
-           $psitem.Exception.Message -like "*was not found on computer*"){
-            Write-Warning "Service $name was not Found"
-        }
-        Else{
-            Write-Warning "Unable to set $Name due to unhandled exception"
-            Write-Warning $psitem.Exception.Message
-        }
+    catch [System.ServiceProcess.ServiceNotFoundException] {
+        Write-Warning "Service $Name was not found"
     }
-    Catch{
+    catch {
         Write-Warning "Unable to set $Name due to unhandled exception"
-        Write-Warning $psitem.Exception.StackTrace
+        Write-Warning $_.Exception.Message
     }
+
 }

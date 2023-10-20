@@ -1,25 +1,33 @@
 function Invoke-WPFtweaksbutton {
   <#
-    
-        .DESCRIPTION
-        PlaceHolder
-    
-    #>
+
+    .SYNOPSIS
+        Invokes the functions associated with each group of checkboxes
+
+  #>
 
   if($sync.ProcessRunning){
     $msg = "Install process is currently running."
     [System.Windows.MessageBox]::Show($msg, "Winutil", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning)
     return
-}
+  }
 
   $Tweaks = Get-WinUtilCheckBoxes -Group "WPFTweaks"
 
-  Set-WinUtilDNS -DNSProvider $WPFchangedns.text
+  Set-WinUtilDNS -DNSProvider $sync["WPFchangedns"].text
+
+  if ($tweaks.count -eq 0 -and  $sync["WPFchangedns"].text -eq "Default"){
+    $msg = "Please check the tweaks you wish to perform."
+    [System.Windows.MessageBox]::Show($msg, "Winutil", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning)
+    return
+  }
 
   Invoke-WPFRunspace -ArgumentList $Tweaks -ScriptBlock {
     param($Tweaks)
 
     $sync.ProcessRunning = $true
+
+    Set-WinUtilRestorePoint
 
     Foreach ($tweak in $tweaks){
         Invoke-WinUtilTweaks $tweak

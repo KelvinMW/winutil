@@ -1,13 +1,13 @@
-function Invoke-WPFInstall {
+function Invoke-WPFUnInstall {
     <#
 
     .SYNOPSIS
-        Installs the selected programs using winget
+        Uninstalls the selected programs
 
     #>
 
     if($sync.ProcessRunning){
-        $msg = "Install process is currently running."
+        $msg = "Install process is currently running"
         [System.Windows.MessageBox]::Show($msg, "Winutil", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning)
         return
     }
@@ -20,31 +20,37 @@ function Invoke-WPFInstall {
         return
     }
 
+    $ButtonType = [System.Windows.MessageBoxButton]::YesNo
+    $MessageboxTitle = "Are you sure?"
+    $Messageboxbody = ("This will uninstall the following applications: `n $WingetInstall")
+    $MessageIcon = [System.Windows.MessageBoxImage]::Information
+
+    $confirm = [System.Windows.MessageBox]::Show($Messageboxbody, $MessageboxTitle, $ButtonType, $MessageIcon)
+
+    if($confirm -eq "No"){return}
+
     Invoke-WPFRunspace -ArgumentList $WingetInstall -scriptblock {
         param($WingetInstall)
         try{
             $sync.ProcessRunning = $true
 
-            # Ensure winget is installed
-            Install-WinUtilWinget
-
             # Install all selected programs in new window
-            Install-WinUtilProgramWinget -ProgramsToInstall $WingetInstall
+            Install-WinUtilProgramWinget -ProgramsToInstall $WingetInstall -Manage "Uninstalling"
 
             $ButtonType = [System.Windows.MessageBoxButton]::OK
-            $MessageboxTitle = "Installs are Finished "
+            $MessageboxTitle = "Uninstalls are Finished "
             $Messageboxbody = ("Done")
             $MessageIcon = [System.Windows.MessageBoxImage]::Information
 
             [System.Windows.MessageBox]::Show($Messageboxbody, $MessageboxTitle, $ButtonType, $MessageIcon)
 
             Write-Host "==========================================="
-            Write-Host "--      Installs have finished          ---"
+            Write-Host "--       Uninstalls have finished       ---"
             Write-Host "==========================================="
         }
         Catch {
             Write-Host "==========================================="
-            Write-Host "--      Winget failed to install        ---"
+            Write-Host "--       Winget failed to install       ---"
             Write-Host "==========================================="
         }
         $sync.ProcessRunning = $False
